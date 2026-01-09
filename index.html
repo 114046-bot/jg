@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+
+  <head>
+    <meta charset="UTF-8">
+    <title>Untitled</title>
+    
+
+  </head>
+    
+  <body>
+  <!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>郭熙《早春圖》：入畫 (全平台修復版)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;700&display=swap');
+
+        body { 
+            margin: 0; 
+            background: #e6dac3; 
+            overflow: hidden; 
+            font-family: "Noto Serif TC", "Kaiti", serif; 
+            touch-action: none; 
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        /* 宣紙紋理 */
+        #paper-texture {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.1'/%3E%3C/svg%3E");
+            opacity: 0.6; z-index: 5; mix-blend-mode: multiply;
+        }
+
+        canvas { 
+            display: block; margin: 0 auto; 
+            filter: sepia(0.4) contrast(0.95) blur(0.3px);
+        }
+
+        #ui { 
+            position: absolute; top: 20px; left: 0; width: 100%; 
+            text-align: center; pointer-events: none; z-index: 10;
+        }
+
+        h1 { 
+            position: absolute; right: 20px; top: 20px;
+            color: #333; margin: 0; font-size: 28px; 
+            writing-mode: vertical-rl; letter-spacing: 8px; opacity: 0.8;
+        }
+
+        .stats { 
+            color: #5d4037; font-size: 16px; 
+            background: rgba(230, 218, 195, 0.7);
+            padding: 5px 15px; border-radius: 20px;
+            display: inline-block;
+            box-shadow: 0 0 10px rgba(230, 218, 195, 1);
+        }
+
+        #msg { 
+            position: absolute; top: 40%; left: 50%; 
+            transform: translate(-50%, -50%); 
+            color: #8b3a3a; font-size: 32px; display: none; 
+            background: rgba(255, 255, 255, 0.95); padding: 40px; 
+            border: 3px solid #8b3a3a; z-index: 20;
+            box-shadow: 5px 5px 15px rgba(0,0,0,0.2);
+            writing-mode: vertical-rl; text-orientation: upright; letter-spacing: 12px;
+            cursor: pointer; pointer-events: auto;
+        }
+
+        /* 操控介面 */
+        #controls {
+            position: absolute; bottom: 30px; left: 0; width: 100%; height: 100px;
+            pointer-events: none; z-index: 100;
+            display: flex; justify-content: space-between; padding: 0 40px; box-sizing: border-box;
+        }
+
+        .d-pad { display: flex; gap: 20px; }
+
+        .seal-btn {
+            pointer-events: auto; /* 允許點擊 */
+            width: 70px; height: 70px;
+            border: 3px solid #a83f39; color: #a83f39;
+            background: rgba(255, 250, 240, 0.3);
+            border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 24px; font-weight: bold; font-family: "Kaiti", serif;
+            backdrop-filter: blur(2px);
+            box-shadow: inset 0 0 10px rgba(168, 63, 57, 0.1);
+            transition: transform 0.1s, background 0.1s;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        /* 這是被按下時的樣式 (不管是滑鼠按還是鍵盤按) */
+        .seal-btn.active, .seal-btn:active {
+            background: #a83f39; color: #fff;
+            transform: scale(0.92) translateY(2px);
+            box-shadow: 0 0 15px rgba(168, 63, 57, 0.6);
+        }
+
+        /* 電腦操作提示 */
+        #pc-hint {
+            position: absolute; bottom: 10px; width: 100%; text-align: center;
+            color: #5d4037; font-size: 12px; opacity: 0.6; pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+<div id="paper-texture"></div>
+
+<div id="ui">
+    <div class="stats" id="stats">高度：〇 丈 | 氣韻：〇</div>
+    <h1>早春行旅</h1>
+</div>
+
+<div id="msg">登峰造極<br><span style="font-size:14px; letter-spacing:2px; display:inline-block; margin-right:10px;">(點擊重來)</span></div>
+
+<div id="controls">
+    <div class="d-pad">
+        <div class="seal-btn" id="btn-left">◀</div>
+        <div class="seal-btn" id="btn-right">▶</div>
+    </div>
+    <div class="action-pad">
+        <div class="seal-btn" id="btn-jump" style="width: 80px; height: 80px; border-radius: 50%;">躍</div>
+    </div>
+</div>
+
+<div id="pc-hint">電腦：← → 移動，空白鍵/↑ 跳躍 (WASD亦可)</div>
+
+<script>
+const canvas = document.createElement('canvas');
+const ctx = canvas.getContext('2d');
+document.body.appendChild(canvas);
+
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// --- 遊戲參數 ---
+const WORLD_HEIGHT = 7000;
+let score = 0;
+let isGameOver = false;
+
+// 物理調整
+const gravity = 0.5; 
+const friction = 0.82; // 調整摩擦力讓停止更靈敏
+const moveSpeed = 1.0; 
+
+const player = {
+    x: canvas.width / 2,
+    y: WORLD_HEIGHT - 150,
+    w: 20,
+    h: 35,
+    vx: 0,
+    vy: 0,
+    jumpForce: -14,
+    grounded: false
+};
+
+const platforms = [];
+const particles = [];
+
+// --- 輸入控制系統 (核心修復部分) ---
+const inputs = {
+    left: false,
+    right: false,
+    jump: false
+};
+
+// 用來更新按鈕視覺狀態
+const btnLeft = document.getElementById('btn-left');
+const btnRight = document.getElementById('btn-right');
+const btnJump = document.getElementById('btn-jump');
+
+function updateButtonVisuals() {
+    inputs.left ? btnLeft.classList.add('active') : btnLeft.classList.remove('active');
+    inputs.right ? btnRight.classList.add('active') : btnRight.classList.remove('active');
+    inputs.jump ? btnJump.classList.add('active') : btnJump.classList.remove('active');
+}
+
+// 1. 鍵盤監聽
+window.addEventListener('keydown', (e) => {
+    // 防止空白鍵和方向鍵捲動網頁
+    if(["Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight"].indexOf(e.code) > -1) {
+        e.preventDefault();
+    }
+
+    switch(e.code) {
+        case 'ArrowLeft': case 'KeyA': inputs.left = true; break;
+        case 'ArrowRight': case 'KeyD': inputs.right = true; break;
+        case 'Space': case 'ArrowUp': case 'KeyW': inputs.jump = true; break;
+    }
+    updateButtonVisuals();
+});
+
+window.addEventListener('keyup', (e) => {
+    switch(e.code) {
+        case 'ArrowLeft': case 'KeyA': inputs.left = false; break;
+        case 'ArrowRight': case 'KeyD': inputs.right = false; break;
+        case 'Space': case 'ArrowUp': case 'KeyW': inputs.jump = false; break;
+    }
+    updateButtonVisuals();
+});
+
+// 2. 觸控與滑鼠監聽 (針對虛擬按鈕)
+function bindInput(element, inputKey) {
+    const start = (e) => { e.preventDefault(); inputs[inputKey] = true; updateButtonVisuals(); };
+    const end = (e) => { e.preventDefault(); inputs[inputKey] = false; updateButtonVisuals(); };
+    
+    element.addEventListener('mousedown', start);
+    element.addEventListener('mouseup', end);
+    element.addEventListener('mouseleave', end);
+    
+    element.addEventListener('touchstart', start, {passive: false});
+    element.addEventListener('touchend', end, {passive: false});
+}
+
+bindInput(btnLeft, 'left');
+bindInput(btnRight, 'right');
+bindInput(btnJump, 'jump');
+
+
+// --- 遊戲邏輯 ---
+
+function initLevel() {
+    platforms.length = 0;
+    score = 0;
+    isGameOver = false;
+    document.getElementById('msg').style.display = 'none';
+    
+    player.x = canvas.width / 2;
+    player.y = WORLD_HEIGHT - 100;
+    player.vx = 0;
+    player.vy = 0;
+
+    // 地基
+    platforms.push({x: -50, y: WORLD_HEIGHT - 60, w: canvas.width + 100, h: 200, type: 'ground'});
+
+    // 生成路徑
+    let currentX = canvas.width / 2;
+    const stepHeight = 55; 
+    const totalSteps = 120;
+    
+    for (let i = 0; i < totalSteps; i++) {
+        let py = WORLD_HEIGHT - 200 - (i * stepHeight);
+        let direction = Math.random() > 0.5 ? 1 : -1;
+        let shift = 20 + Math.random() * 90;
+        
+        currentX += direction * shift;
+        if (currentX < 40) currentX = 40;
+        if (currentX > canvas.width - 140) currentX = canvas.width - 140;
+
+        let pw = 110 + Math.random() * 60; // 寬平台
+
+        platforms.push({ 
+            x: currentX, y: py, w: pw, h: 20, 
+            inkDensity: Math.random(),
+            tree: Math.random() > 0.85,
+            item: (Math.random() > 0.6) ? { collected: false, x: currentX + pw/2, y: py - 20 } : null
+        });
+    }
+
+    // 終點
+    platforms.push({x: 0, y: WORLD_HEIGHT - 6700, w: canvas.width, h: 100, type: 'temple'});
+
+    // 雲霧初始化
+    particles.length = 0;
+    for(let i=0; i<25; i++) {
+        particles.push({
+            x: Math.random() * canvas.width,
+            y: player.y - Math.random() * canvas.height,
+            vx: (Math.random() - 0.5) * 0.5,
+            size: 20 + Math.random() * 40,
+            alpha: Math.random() * 0.3
+        });
+    }
+}
+
+function update() {
+    if (isGameOver) return;
+
+    // 左右移動 (使用統一的 inputs 狀態)
+    if (inputs.left) player.vx -= moveSpeed;
+    if (inputs.right) player.vx += moveSpeed;
+    
+    player.vx *= friction; // 摩擦力
+
+    // 跳躍
+    if (inputs.jump && player.grounded) {
+        player.vy = player.jumpForce;
+        player.grounded = false;
+    }
+
+    // 重力
+    player.vy += gravity;
+    player.x += player.vx;
+    player.y += player.vy;
+
+    // 碰撞偵測
+    player.grounded = false;
+    if (player.vy >= 0) {
+        platforms.forEach(p => {
+            if (player.x + player.w > p.x + 5 && 
+                player.x < p.x + p.w - 5 && 
+                player.y + player.h >= p.y && 
+                player.y + player.h <= p.y + player.vy + 12) { // 稍微增加判定寬度防止穿透
+                
+                player.y = p.y - player.h;
+                player.vy = 0;
+                player.grounded = true;
+
+                if (p.type === 'temple') {
+                    isGameOver = true;
+                    document.getElementById('msg').style.display = 'block';
+                }
+            }
+        });
+    }
+
+    // 收集氣韻
+    platforms.forEach(p => {
+        if (p.item && !p.item.collected) {
+            let dx = player.x - p.item.x;
+            let dy = player.y - p.item.y;
+            if (dx*dx + dy*dy < 900) { // 距離30以內
+                p.item.collected = true;
+                score++;
+            }
+        }
+    });
+
+    // 左右邊界
+    if (player.x < 0) { player.x = 0; player.vx = 0; }
+    if (player.x > canvas.width - player.w) { player.x = canvas.width - player.w; player.vx = 0; }
+    
+    // 掉落重置
+    if (player.y > WORLD_HEIGHT) {
+        player.y = WORLD_HEIGHT - 100;
+        player.vx = 0;
+    }
+
+    // 粒子循環
+    particles.forEach(p => {
+        p.x += p.vx;
+        if (p.x > canvas.width) p.x = -50;
+        if (p.x < -50) p.x = canvas.width;
+    });
+
+    // UI
+    let h = Math.max(0, Math.floor((WORLD_HEIGHT - player.y) / 10));
+    document.getElementById('stats').innerText = `高度：${h} 丈 | 氣韻：${score}`;
+}
+
+// --- 繪圖 ---
+
+function drawInkPlatform(ctx, x, y, w, h, density) {
+    ctx.save();
+    const baseColor = Math.floor(40 + density * 40);
+    ctx.fillStyle = `rgb(${baseColor}, ${baseColor}, ${baseColor})`;
+    ctx.shadowColor = `rgba(${baseColor}, ${baseColor}, ${baseColor}, 0.5)`;
+    ctx.shadowBlur = 8;
+    
+    ctx.beginPath();
+    // 圓潤墨痕
+    ctx.roundRect(x, y, w, h, 10);
+    ctx.fill();
+
+    // 皴法紋理
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = "rgba(0,0,0,0.3)";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(x + 5, y + 5);
+    ctx.quadraticCurveTo(x + w/2, y - 4, x + w - 5, y + 5);
+    ctx.stroke();
+    ctx.restore();
+}
+
+function drawTree(ctx, x, y) {
+    ctx.save();
+    ctx.strokeStyle = "rgba(20, 20, 20, 0.8)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(x, y);
+    ctx.lineTo(x-5, y-15);
+    ctx.lineTo(x-12, y-22);
+    ctx.moveTo(x-5, y-15);
+    ctx.lineTo(x+2, y-25);
+    ctx.stroke();
+    ctx.restore();
+}
+
+function drawPlayer(ctx, p) {
+    ctx.save();
+    ctx.translate(p.x + p.w/2, p.y + p.h/2);
+    if (p.vx < 0) ctx.scale(-1, 1); // 轉向
+
+    ctx.fillStyle = "#1a1a1a";
+    
+    // 身體
+    ctx.beginPath();
+    ctx.ellipse(0, 5, 8, 14, 0, 0, Math.PI*2);
+    ctx.fill();
+    
+    // 頭
+    ctx.beginPath();
+    ctx.arc(0, -12, 5, 0, Math.PI*2);
+    ctx.fill();
+
+    // 飄帶
+    ctx.strokeStyle = "#333";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-4, -5);
+    ctx.quadraticCurveTo(-15 - (p.vy*0.5), 0, -10, 10);
+    ctx.stroke();
+
+    ctx.restore();
+}
+
+function render() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const camY = player.y - canvas.height / 1.6;
+
+    ctx.save();
+    ctx.translate(0, -camY);
+
+    // 背景漸層
+    const grad = ctx.createLinearGradient(0, camY, 0, camY + canvas.height);
+    grad.addColorStop(0, "rgba(235, 230, 220, 0)");
+    grad.addColorStop(1, "rgba(200, 190, 175, 0.3)");
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, camY, canvas.width, canvas.height);
+
+    // 平台
+    platforms.forEach(p => {
+        if (p.y > camY - 100 && p.y < camY + canvas.height + 100) {
+            drawInkPlatform(ctx, p.x, p.y, p.w, p.h, p.inkDensity || 0.5);
+            if(p.tree) drawTree(ctx, p.x + 15, p.y);
+            if(p.item && !p.item.collected) {
+                ctx.fillStyle = "#4a6b46";
+                ctx.beginPath(); ctx.arc(p.item.x, p.item.y, 6, 0, Math.PI*2); ctx.fill();
+            }
+        }
+    });
+
+    drawPlayer(ctx, player);
+
+    // 雲霧
+    particles.forEach(p => {
+        ctx.fillStyle = `rgba(255, 255, 255, ${p.alpha})`;
+        ctx.beginPath();
+        // 簡單視差：雲霧移動速度稍微不同
+        ctx.arc(p.x, p.y + camY * 0.1, p.size, 0, Math.PI*2); 
+        ctx.fill();
+    });
+    
+    ctx.restore();
+    update();
+    requestAnimationFrame(render);
+}
+
+// 點擊重新開始
+document.getElementById('msg').addEventListener('mousedown', initLevel);
+document.getElementById('msg').addEventListener('touchstart', initLevel);
+
+initLevel();
+render();
+</script>
+</body>
+</html>
+    
+  </body>
+  
+</html>
